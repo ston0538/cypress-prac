@@ -17,14 +17,35 @@ describe("Input form", () => {
   });
 
   context("Form submission", () => {
-    it.only("Adds a new todo on submit", () => {
+    beforeEach(() => {
       cy.server();
+    });
+    it("Adds a new todo on submit", () => {
       cy.route("POST", "api/todos", {
         name: "Buy eggs",
         id: 1,
         isComplete: false,
       });
-      cy.get(".new-todo").type("Buy eggs").type("{enter}");
+      cy.get(".new-todo")
+        .type("Buy eggs")
+        .type("{enter}")
+        .should("have.value", "");
+      cy.get(".todo-list li")
+        .should("have.length", 1)
+        .and("contain", "Buy eggs");
+    });
+    it("Shows an error message on a failed submission", () => {
+      cy.route({
+        url: "/api/todos",
+        method: "POST",
+        status: 500,
+        response: {},
+      });
+      cy.get(".new-todo").type("test{enter}");
+
+      cy.get(".todo-list li").should("not.exist");
+
+      cy.get(".error").should("be.visible");
     });
   });
 });
